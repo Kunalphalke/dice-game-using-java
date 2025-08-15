@@ -1,2 +1,3 @@
-# dice-game-using-java
-i have created a project based on dice game which is a  game includes n number of  players and there will be one winner 
+This is a simple console-based Dice Game built using Java, designed to be fun and easy to play while also serving as a great beginner-friendly project to understand Java basics. The game uses the `java.util.Random` class to generate random dice rolls and `Scanner` for user input. When you run the program, it asks how many dice you want to roll, then displays the random results for each die along with the total score. You can choose to roll again or exit the game. The project is lightweight, easy to modify, and can be extended with features like a scoreboard, multiplayer mode, or even a graphical interface using Java Swing or JavaFX. To run it, simply clone the repository, compile the Java file using `javac`, and execute it with `java`. This project is open-source under the MIT License, and contributions are welcome.
+
+
