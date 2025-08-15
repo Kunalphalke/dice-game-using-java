@@ -1,0 +1,191 @@
+import java.util.*;
+
+/**
+ * Dice Game
+ * Author: Kunal Phalke
+ * Description:
+ * This is a simple multi-player dice game where each player rolls a dice in each round.
+ * The player with the highest roll wins the round. In case of a tie, no wins are awarded.
+ * The game keeps track of each player's total wins.
+ */
+
+/** ----- Player ----- */
+class Player {
+    private final String name;
+    private int wins;
+
+    public Player(String name) {
+        this.name = name;
+        this.wins = 0;
+    }
+
+    public String showName() {
+        return name;
+    }
+
+    public int showWins() {
+        return wins;
+    }
+
+    public void incrementWin() {
+        wins++;
+    }
+}
+
+/** ----- Dice ----- */
+class Dice {
+    private final Random rand = new Random();
+
+    /** Returns a value in [1..6] */
+    public int roll() {
+        return rand.nextInt(6) + 1;
+    }
+}
+
+/** ----- GameEngine ----- */
+class GameEngine {
+    private final List<Player> players;
+    private final Dice dice;
+    private int roundNumber = 0;
+
+    public GameEngine(List<Player> players) {
+        this.players = Objects.requireNonNull(players);
+        this.dice = new Dice();
+    }
+
+    /** Holds the outcome of a single round. */
+    public static class RoundResult {
+        public final Map<Player, Integer> rolls;
+        public final List<Player> winners;
+        public final int highest;
+
+        public RoundResult(Map<Player, Integer> rolls, List<Player> winners, int highest) {
+            this.rolls = rolls;
+            this.winners = winners;
+            this.highest = highest;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Rolls: ");
+            boolean first = true;
+            for (Map.Entry<Player,Integer> e : rolls.entrySet()) {
+                if (!first) sb.append(" | ");
+                sb.append(e.getKey().showName()).append(" → ").append(e.getValue());
+                first = false;
+            }
+            sb.append("\n");
+            if (winners.size() == 1) {
+                sb.append("Winner: ").append(winners.get(0).showName())
+                  .append(" with ").append(highest);
+            } else {
+                sb.append("Tie at ").append(highest).append(" between: ");
+                for (int i = 0; i < winners.size(); i++) {
+                    if (i > 0) sb.append(", ");
+                    sb.append(winners.get(i).showName());
+                }
+            }
+            return sb.toString();
+        }
+    }
+
+    /** Plays a single round, increments wins only if there’s a single winner. */
+    public RoundResult playRound() {
+        roundNumber++;
+        Map<Player, Integer> rolls = new LinkedHashMap<>();
+        int highest = 0;
+
+        for (Player p : players) {
+            int val = dice.roll();
+            rolls.put(p, val);
+            if (val > highest) highest = val;
+        }
+
+        // Determine winners (could be multiple in case of a tie)
+        List<Player> winners = new ArrayList<>();
+        for (Map.Entry<Player, Integer> e : rolls.entrySet()) {
+            if (e.getValue() == highest) winners.add(e.getKey());
+        }
+
+        // Only increment wins if there is a single winner
+        if (winners.size() == 1) {
+            winners.get(0).incrementWin();
+        }
+
+        System.out.println("\n— Round " + roundNumber + " —");
+        return new RoundResult(rolls, winners, highest);
+    }
+
+    /** Prints the current standings, sorted by wins desc then name. */
+    public void showResults() {
+        System.out.println("\nScoreboard:");
+        players.stream()
+               .sorted(Comparator.comparingInt(Player::showWins).reversed()
+                                 .thenComparing(Player::showName))
+               .forEach(p -> System.out.println("• " + p.showName() + " has won " + p.showWins() + " rounds"));
+    }
+}
+
+/** ----- Executor (main) ----- */
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter number of players: ");
+        int n;
+        while (true) {
+            if (sc.hasNextInt()) {
+                n = sc.nextInt();
+                sc.nextLine(); // consume newline after nextInt()
+                if (n >= 1) break;
+                System.out.print("Please enter a positive number of players: ");
+            } else {
+                sc.next(); // discard invalid token
+                System.out.print("Please enter a valid integer: ");
+            }
+        }
+
+        List<Player> players = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            System.out.print("Player " + (i + 1) + " name: ");
+            String name = sc.nextLine().trim();
+            while (name.isEmpty()) {
+                System.out.print("Name cannot be empty. Enter again: ");
+                name = sc.nextLine().trim();
+            }
+            players.add(new Player(name));
+        }
+
+        GameEngine engine = new GameEngine(players);
+
+        while (true) {
+            System.out.print("\nEnter 1 to play a round, 0 to exit: ");
+            Integer choice = read01(sc);
+            if (choice == null) continue;
+
+            if (choice == 0) {
+                System.out.println("Thanks for playing!");
+                engine.showResults();
+                break;
+            }
+
+            GameEngine.RoundResult rr = engine.playRound();
+            System.out.println(rr.toString());
+            engine.showResults();
+        }
+
+        sc.close();
+    }
+
+    private static Integer read01(Scanner sc) {
+        if (!sc.hasNext()) return null;
+        String token = sc.next().trim();
+        if (!token.matches("[01]")) {
+            System.out.println("Invalid input. Please type 1 or 0.");
+            return null;
+        }
+        sc.nextLine(); // consume rest of line
+        return Integer.parseInt(token);
+    }
+}
